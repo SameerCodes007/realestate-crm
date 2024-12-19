@@ -1,0 +1,25 @@
+{
+  "name": "GLOBAL ENTERPRISES",
+  "tagline": "Your trusted partner in real estate since 1970",
+  "contact": {
+    "address": {
+      "line1": "Aashiyana, No.16, Ground Floor",
+      "line2": "5th Main, Near Gowri Shankar Temple",
+      "line3": "Suncity Layout, J P Nagar 7th Phase",
+      "line4": "Off Kothanur Main Road, Bangalore - 560076"
+    },
+    "phone": "08040998072",
+    "email": "theglobalenterprises@gmail.com",
+    "hours": "Mon - Sat: 9:00 AM - 6:00 PM",
+    "location": {
+      "lat": 12.9716,
+      "lng": 77.5946
+    }
+  },
+  "social": {
+    "facebook": "#",
+    "instagram": "#",
+    "twitter": "#",
+    "linkedin": "#"
+  }
+}

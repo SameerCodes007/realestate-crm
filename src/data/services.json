@@ -1,0 +1,40 @@
+{
+  "services": [
+    {
+      "title": "Property Resale",
+      "description": "Find your perfect resale property with our expert guidance",
+      "icon": "Building2",
+      "path": "/property-resale"
+    },
+    {
+      "title": "Primary Sales",
+      "description": "Exclusive new properties from top developers",
+      "icon": "Key",
+      "path": "/new-properties"
+    },
+    {
+      "title": "Rental Properties",
+      "description": "Wide range of rental properties to suit your needs",
+      "icon": "Home",
+      "path": "/rental-properties"
+    },
+    {
+      "title": "Gated Community Plots",
+      "description": "Premium plots in secure gated communities",
+      "icon": "MapPin",
+      "path": "/gated-plots"
+    },
+    {
+      "title": "Construction Services",
+      "description": "Expert construction services for your dream home",
+      "icon": "Construction",
+      "path": "/construction"
+    },
+    {
+      "title": "Interior Design",
+      "description": "Transform your space with our interior design services",
+      "icon": "Paintbrush2",
+      "path": "/interior-design"
+    }
+  ]
+}
