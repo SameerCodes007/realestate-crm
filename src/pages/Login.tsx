@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { login } from '../api/auth';
 
 const Login = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: '',
   });
 
@@ -17,22 +17,16 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // For demo purposes, using static credentials
-      if (formData.username === 'globaladmin' && formData.password === 'gl0bal$nt') {
-        // In production, use proper authentication
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: 'admin@globalenterprises.com',
-          password: formData.password,
-        });
-
-        if (error) throw error;
-
+      const { data, error } = await login(formData.email, formData.password);
+      
+      if (error) throw new Error(error);
+      
+      if (data.session) {
+        localStorage.setItem('token', data.session.access_token);
         navigate('/dashboard');
-      } else {
-        throw new Error('Invalid credentials');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -51,14 +45,14 @@ const Login = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-              Username
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email
             </label>
             <input
-              type="text"
-              id="username"
-              value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              type="email"
+              id="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
               required
             />
