@@ -83,7 +83,18 @@ ALTER TABLE properties ENABLE ROW LEVEL SECURITY;
 -- Resale Properties
 CREATE TABLE IF NOT EXISTS resale_properties (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+  builder_name TEXT NOT NULL,
+  project TEXT NOT NULL,
+  location TEXT NOT NULL,
+  size TEXT NOT NULL,
+  possession_date DATE,
+  units INTEGER,
+  towers INTEGER,
+  floors INTEGER,
+  flat_per_floor INTEGER,
+  type TEXT NOT NULL,
+  price NUMERIC NOT NULL,
+  images TEXT[],
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -103,23 +114,35 @@ CREATE POLICY "Authenticated users can manage resale properties"
   USING (true)
   WITH CHECK (true);
 
+
 -- Primary Sale Properties
 CREATE TABLE IF NOT EXISTS primary_sale_properties (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+  builder_name TEXT NOT NULL,
+  project TEXT NOT NULL,
+  location TEXT NOT NULL,
+  size TEXT NOT NULL,
+  possession_date DATE,
+  units INTEGER,
+  towers INTEGER,
+  floors INTEGER,
+  flat_per_floor INTEGER,
+  type TEXT NOT NULL,
+  price NUMERIC NOT NULL,
+  images TEXT[],
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 ALTER TABLE primary_sale_properties ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Public can read primary sale properties"
+CREATE POLICY "Public can read resale properties"
   ON primary_sale_properties
   FOR SELECT
   TO authenticated
   USING (true);
 
-CREATE POLICY "Authenticated users can manage primary sale properties"
+CREATE POLICY "Authenticated users can manage resale properties"
   ON primary_sale_properties
   FOR ALL
   TO authenticated
@@ -129,25 +152,37 @@ CREATE POLICY "Authenticated users can manage primary sale properties"
 -- Rental Properties
 CREATE TABLE IF NOT EXISTS rental_properties (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+  builder_name TEXT NOT NULL,
+  project TEXT NOT NULL,
+  location TEXT NOT NULL,
+  size TEXT NOT NULL,
+  possession_date DATE,
+  units INTEGER,
+  towers INTEGER,
+  floors INTEGER,
+  flat_per_floor INTEGER,
+  type TEXT NOT NULL,
+  price NUMERIC NOT NULL,
+  images TEXT[],
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 ALTER TABLE rental_properties ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Public can read rental properties"
+CREATE POLICY "Public can read resale properties"
   ON rental_properties
   FOR SELECT
   TO authenticated
   USING (true);
 
-CREATE POLICY "Authenticated users can manage rental properties"
+CREATE POLICY "Authenticated users can manage resale properties"
   ON rental_properties
   FOR ALL
   TO authenticated
   USING (true)
   WITH CHECK (true);
+
 
 -- Plots
 CREATE TABLE IF NOT EXISTS plots (
