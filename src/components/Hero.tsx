@@ -11,7 +11,7 @@ const Hero = () => {
               Your Dream Property Awaits
             </h1>
             <p className="text-xl md:text-2xl mb-8 max-w-2xl">
-              Discover premium properties in Bangalore with GLOBAL ENTERPRISES - Your trusted partner in real estate since 1970
+              Discover premium properties in Bangalore with GLOBAL ENTERPRISES - Your trusted partner in real estate
             </p>
             <Link
                 key={"Resale"}

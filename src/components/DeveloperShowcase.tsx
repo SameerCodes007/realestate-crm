@@ -1,36 +1,28 @@
+import React from 'react';
+import { useDevelopers } from '../hooks/useDevelopers';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay } from 'swiper/modules';
 import 'swiper/css';
 
-const developers = [
-  {
-    id: 1,
-    name: 'Prestige Group',
-    logo: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80',
-  },
-  {
-    id: 2,
-    name: 'Sobha Limited',
-    logo: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80',
-  },
-  {
-    id: 3,
-    name: 'Brigade Group',
-    logo: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80',
-  },
-  {
-    id: 4,
-    name: 'Puravankara',
-    logo: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80',
-  },
-  {
-    id: 5,
-    name: 'Godrej Properties',
-    logo: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80',
-  },
-];
-
 const DeveloperShowcase = () => {
+  const { developers, loading, error } = useDevelopers();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-red-600 p-4">
+        Error loading developers: {error}
+      </div>
+    );
+  }
+
   return (
     <section className="py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

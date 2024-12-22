@@ -1,58 +1,28 @@
+import React from 'react';
+import { useAwards } from '../hooks/useAwards';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay } from 'swiper/modules';
-
-const awards = [
-  {
-    id: 1,
-    "image": "/awards/New Doc 11-23-2024 13.32_11.jpg"
-  },
-  {
-    id: 2,
-    "image": "/awards/New Doc 11-23-2024 12.37_2.jpg"
-  },
-  {
-    id: 3,
-    "image": "/awards/New Doc 11-23-2024 12.37_3.jpg"
-  },
-  {
-    id: 3,
-    "image": "/awards/New Doc 11-23-2024 12.37_4.jpg"
-  },
-  {
-    id: 3,
-    "image": "/awards/New Doc 11-23-2024 12.37_5.jpg"
-  },
-  {
-    id: 3,
-    "image": "/awards/New Doc 11-23-2024 12.37_6.jpg"
-  },
-  {
-    id: 3,
-    "image": "/awards/New Doc 11-23-2024 13.32_8.jpg"
-  },
-  {
-    id: 3,
-    "image": "/awards/New Doc 11-23-2024 12.37_8.jpg"
-  },
-  {
-    id: 3,
-    "image": "/awards/New Doc 11-23-2024 12.37_9.jpg"
-  },
-  {
-    id: 3,
-    "image": "/awards/New Doc 11-23-2024 12.37_10.jpg"
-  },
-  {
-    id: 3,
-    "image": "/awards/New Doc 11-23-2024 12.37_11.jpg"
-  },
-  {
-    id: 3,
-    "image": "/awards/New Doc 11-23-2024 12.37_12.jpg"
-  },
-];
+import 'swiper/css';
 
 const Awards = () => {
+  const { awards, loading, error } = useAwards();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-red-600 p-4">
+        Error loading awards: {error}
+      </div>
+    );
+  }
+
   return (
     <section className="py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -76,8 +46,10 @@ const Awards = () => {
               <div className="bg-white p-4 rounded-lg shadow-md">
                 <img
                   src={award.image}
+                  alt={award.title}
                   className="w-full h-48 object-contain"
                 />
+                <h3 className="mt-4 text-center font-semibold">{award.title}</h3>
               </div>
             </SwiperSlide>
           ))}

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { uploadImage, deleteImage } from '../../utils/imageUpload';
+import { uploadImage } from '../../utils/imageUpload';
 import { formatPrice } from '../../utils/formatters';
 import ImageUploader from './ImageUploader';
-// import {  Trash } from '../icons';
+import { Plus, Pencil, Trash } from '../myIcons';
 
 interface Property {
   id: string;
@@ -13,20 +14,44 @@ interface Property {
   size: string;
   price: number;
   images: string[];
+  created_at: string;
+}
+
+interface FormData {
+  builder_name: string;
+  project: string;
+  location: string;
+  size: string;
+  price: number;
+  tempImages: File[];
 }
 
 interface PropertiesManagerProps {
-  type: 'resale' | 'primary-sale' | 'rental';
+  type: 'resale' | 'primary_sale' | 'rental';
 }
 
 const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
+  const location = useLocation();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [formData, setFormData] = useState<FormData>({
+    builder_name: '',
+    project: '',
+    location: '',
+    size: '',
+    price: 0,
+    tempImages: []
+  });
 
   const tableName = `${type}_properties`;
+
+  // Reset form when location changes
+  useEffect(() => {
+    handleCancel();
+  }, [location.pathname]);
 
   useEffect(() => {
     fetchProperties();
@@ -34,13 +59,13 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
 
   const fetchProperties = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from(tableName)
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setProperties(data);
+      if (fetchError) throw fetchError;
+      setProperties(data || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -48,83 +73,49 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    
-    const propertyData = {
-      builder_name: formData.get('builder_name'),
-      project: formData.get('project'),
-      location: formData.get('location'),
-      size: formData.get('size'),
-      price: parseFloat(formData.get('price') as string),
-      images: editingProperty?.images || []
-    };
+    setLoading(true);
 
     try {
+      // Upload images first
+      const uploadedImageUrls = await Promise.all(
+        formData.tempImages.map(file => 
+          uploadImage(file, 'properties', `${type}/${editingProperty?.id || 'new'}`)
+        )
+      );
+
+      const propertyData = {
+        builder_name: formData.builder_name,
+        project: formData.project,
+        location: formData.location,
+        size: formData.size,
+        price: formData.price,
+        images: uploadedImageUrls
+      };
+
       if (editingProperty) {
         const { error } = await supabase
           .from(tableName)
           .update(propertyData)
           .eq('id', editingProperty.id);
-        
+
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from(tableName)
           .insert([propertyData]);
-        
+
         if (error) throw error;
       }
 
       await fetchProperties();
-      setShowForm(false);
-      setEditingProperty(null);
+      handleCancel();
     } catch (err) {
       setError(err.message);
-    }
-  };
-
-  const handleImageUpload = async (files: FileList) => {
-    try {
-      const urls = await Promise.all(
-        Array.from(files).map(file => 
-          uploadImage(file, 'properties', `${type}/${editingProperty?.id || 'new'}`)
-        )
-      );
-
-      if (editingProperty) {
-        const updatedImages = [...editingProperty.images, ...urls];
-        setEditingProperty({ ...editingProperty, images: updatedImages });
-        
-        await supabase
-          .from(tableName)
-          .update({ images: updatedImages })
-          .eq('id', editingProperty.id);
-      }
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleImageDelete = async (url: string) => {
-    try {
-      await deleteImage('properties', url);
-      
-      if (editingProperty) {
-        const updatedImages = editingProperty.images.filter(img => img !== url);
-        setEditingProperty({ ...editingProperty, images: updatedImages });
-        
-        await supabase
-          .from(tableName)
-          .update({ images: updatedImages })
-          .eq('id', editingProperty.id);
-      }
-    } catch (err) {
-      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -132,13 +123,6 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
     if (!confirm('Are you sure you want to delete this property?')) return;
 
     try {
-      const property = properties.find(p => p.id === id);
-      
-      // Delete images first
-      await Promise.all(
-        property.images.map(url => deleteImage('properties', url))
-      );
-
       const { error } = await supabase
         .from(tableName)
         .delete()
@@ -151,8 +135,53 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
     }
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
+  const handleEdit = (property: Property) => {
+    setEditingProperty(property);
+    setFormData({
+      builder_name: property.builder_name,
+      project: property.project,
+      location: property.location,
+      size: property.size,
+      price: property.price,
+      tempImages: []
+    });
+    setShowForm(true);
+  };
+
+  const handleCancel = () => {
+    setShowForm(false);
+    setEditingProperty(null);
+    setFormData({
+      builder_name: '',
+      project: '',
+      location: '',
+      size: '',
+      price: 0,
+      tempImages: []
+    });
+    setError(null);
+  };
+
+  const handleImageSelect = (files: FileList) => {
+    setFormData(prev => ({
+      ...prev,
+      tempImages: [...prev.tempImages, ...Array.from(files)]
+    }));
+  };
+
+  const handleImageDelete = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      tempImages: prev.tempImages.filter((_, i) => i !== index)
+    }));
+  };
+
+  if (loading && !showForm) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+      </div>
+    );
   }
 
   return (
@@ -160,17 +189,14 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">
           {type === 'resale' ? 'Resale Properties' :
-           type === 'primary-sale' ? 'Primary Sale Properties' :
+           type === 'primary_sale' ? 'Primary Sale Properties' :
            'Rental Properties'}
         </h2>
         <button
-          onClick={() => {
-            setEditingProperty(null);
-            setShowForm(true);
-          }}
+          onClick={() => setShowForm(true)}
           className="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center"
         >
-          {/* <Plus className="h-5 w-5 mr-2" /> */}
+          <Plus className="h-5 w-5 mr-2" />
           Add Property
         </button>
       </div>
@@ -181,7 +207,7 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
         </div>
       )}
 
-      {showForm && (
+      {showForm ? (
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -190,8 +216,8 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
               </label>
               <input
                 type="text"
-                name="builder_name"
-                defaultValue={editingProperty?.builder_name}
+                value={formData.builder_name}
+                onChange={(e) => setFormData({ ...formData, builder_name: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                 required
               />
@@ -202,8 +228,8 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
               </label>
               <input
                 type="text"
-                name="project"
-                defaultValue={editingProperty?.project}
+                value={formData.project}
+                onChange={(e) => setFormData({ ...formData, project: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                 required
               />
@@ -214,8 +240,8 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
               </label>
               <input
                 type="text"
-                name="location"
-                defaultValue={editingProperty?.location}
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                 required
               />
@@ -226,8 +252,8 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
               </label>
               <input
                 type="text"
-                name="size"
-                defaultValue={editingProperty?.size}
+                value={formData.size}
+                onChange={(e) => setFormData({ ...formData, size: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                 required
               />
@@ -238,8 +264,8 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
               </label>
               <input
                 type="number"
-                name="price"
-                defaultValue={editingProperty?.price}
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                 required
               />
@@ -247,88 +273,86 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
           </div>
 
           <ImageUploader
-            images={editingProperty?.images || []}
-            onUpload={handleImageUpload}
+            images={formData.tempImages.map(file => URL.createObjectURL(file))}
+            onUpload={handleImageSelect}
             onDelete={handleImageDelete}
           />
 
           <div className="flex justify-end space-x-4">
             <button
               type="button"
-              onClick={() => setShowForm(false)}
+              onClick={handleCancel}
               className="px-4 py-2 border border-gray-300 rounded-md text-gray-700"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-red-600 text-white rounded-md"
+              disabled={loading}
+              className="px-4 py-2 bg-red-600 text-white rounded-md disabled:opacity-50"
             >
-              {editingProperty ? 'Update' : 'Create'} Property
+              {loading ? 'Saving...' : (editingProperty ? 'Update' : 'Create')}
             </button>
           </div>
         </form>
-      )}
-
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead>
-            <tr>
-              <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">
-                Property
-              </th>
-              <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">
-                Location
-              </th>
-              <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">
-                Price
-              </th>
-              <th className="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {properties.map((property) => (
-              <tr key={property.id}>
-                <td className="px-6 py-4">
-                  <div>
-                    <div className="font-medium text-gray-900">
-                      {property.project}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {property.builder_name}
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {property.location}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {formatPrice(property.price)}
-                </td>
-                <td className="px-6 py-4 text-right text-sm font-medium">
-                  <button
-                    onClick={() => {
-                      setEditingProperty(property);
-                      setShowForm(true);
-                    }}
-                    className="text-red-600 hover:text-red-900 mr-4"
-                  >
-                    {/* <Pencil className="h-5 w-5" /> */}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(property.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    {/* <Trash className="h-5 w-5" /> */}
-                  </button>
-                </td>
+      ) : (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">
+                  Property
+                </th>
+                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">
+                  Location
+                </th>
+                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">
+                  Price
+                </th>
+                <th className="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase">
+                  Actions
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {properties.map((property) => (
+                <tr key={property.id}>
+                  <td className="px-6 py-4">
+                    <div>
+                      <div className="font-medium text-gray-900">
+                        {property.project}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {property.builder_name}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {property.location}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {formatPrice(property.price)}
+                  </td>
+                  <td className="px-6 py-4 text-right text-sm font-medium">
+                    <button
+                      onClick={() => handleEdit(property)}
+                      className="text-red-600 hover:text-red-900 mr-4"
+                    >
+                      <Pencil className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(property.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <Trash className="h-5 w-5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,33 +1,26 @@
+import React from 'react';
+import { useTeam } from '../hooks/useTeam';
 import { Phone, Mail, Linkedin } from './icons';
 
-const team = [
-  {
-    id: 1,
-    name: 'Rajesh Kumar',
-    role: 'CEO & Founder',
-    image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80',
-  },
-  {
-    id: 2,
-    name: 'Priya Sharma',
-    role: 'Sales Director',
-    image: 'https://images.unsplash.com/photo-1573496799652-408c2ac9fe98?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80',
-  },
-  {
-    id: 3,
-    name: 'Amit Patel',
-    role: 'Property Consultant',
-    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80',
-  },
-  {
-    id: 4,
-    name: 'Sneha Reddy',
-    role: 'Interior Designer',
-    image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80',
-  },
-];
-
 const TeamShowcase = () => {
+  const { team, loading, error } = useTeam();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-red-600 p-4">
+        Error loading team: {error}
+      </div>
+    );
+  }
+
   return (
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

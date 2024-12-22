@@ -11,8 +11,6 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   const { user, loading, isInitialized } = useAuth();
 
   useEffect(() => {
-    console.log('user',user);
-    
     if (!loading && !user && !isInitialized) {
       navigate('/login');
     }
