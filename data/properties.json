@@ -1,0 +1,70 @@
+{
+ "properties" : [
+  {
+    "id": 1,
+    "title": "Prestige Primrose Hills",
+    "location": "Off Kanakapura Road, Bangalore",
+    "price": "₹1 Cr",
+    "image":
+      "https://preossdev.s3.ap-south-1.amazonaws.com/projectgallery/9ad946c0-d9f6-4b5e-815e-0151e42b7033.webp",
+    "beds": 2,
+    "baths": 2,
+    "area": "1500 sq ft"
+  },
+  {
+    "id": 2,
+    "title": "Provident Park Square",
+    "location": "Judicial Layout, Kanakapura Road, Bangalore",
+    "price": "₹1 Cr",
+    "image":
+      "https://provident.ixapl.com/park-square/images/banner.jpg",
+    "beds": 2,
+    "baths": 2,
+    "area": "1500 sq ft"
+  },
+  {
+    "id": 3,
+    "title": "Maratt Pimento",
+    "location": "JP Nagar 4th Phase",
+    "price": "₹1 Cr",
+    "image":
+      "https://marattpimento.com/images/maratt_pimento_exterior.jpg",
+    "beds": 2,
+    "baths": 2,
+    "area": "1500 sq ft"
+  },
+  {
+    "id": 4,
+    "title": "SNN Raj Lakeview",
+    "location": "BTM 2nd Stage",
+    "price": "₹1 Cr",
+    "image":
+      "https://static.wixstatic.com/media/ca8cea_20f4ab1df30040d4ae784572a21c12fe~mv2.jpeg/v1/fill/w_236,h_236,q_90/ca8cea_20f4ab1df30040d4ae784572a21c12fe~mv2.webp",
+    "beds": 2,
+    "baths": 2,
+    "area": "1500 sq ft"
+  },
+  {
+    "id": 5,
+    "title": "Mahindra Windchimes",
+    "location": "Bannerghatta Road,",
+    "price": "₹1 Cr",
+    "image":
+      "https://www.homznspace.com/wp-content/uploads/2015/05/Mahindra-Windchimes-A-1200x703.jpg",
+    "beds": 2,
+    "baths": 2,
+    "area": "1500 sq ft"
+  },
+  {
+    "id": 6,
+    "title": "Valmark CityVille",
+    "location": "Off, Bannerghatta Rd",
+    "price": "₹1 Cr",
+    "image":
+      "https://cdn.modlix.com/FIN/cityville1/WhatsApp%20Image%202024-03-05%20at%203.14.webp",
+    "beds": 2,
+    "baths": 2,
+    "area": "1500 sq ft"
+  }
+]
+}

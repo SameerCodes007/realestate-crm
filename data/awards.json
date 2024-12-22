@@ -1,0 +1,22 @@
+{
+  "awards": [
+    {
+      "id": 1,
+      "title": "Best Real Estate Agency 2023",
+      "organization": "Bangalore Real Estate Awards",
+      "icon": "Award"
+    },
+    {
+      "id": 2,
+      "title": "Excellence in Customer Service",
+      "organization": "Property Excellence Awards",
+      "icon": "Star"
+    },
+    {
+      "id": 3,
+      "title": "Top Developer Partner 2023",
+      "organization": "Prestige Group",
+      "icon": "Award"
+    }
+  ]
+}
