@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { uploadImage } from '../../utils/imageUpload';
-import { formatPrice } from '../../utils/formatters';
 import ImageUploader from './ImageUploader';
+import ImageViewer from './ImageViewer';
 import { Plus, Pencil, Trash } from '../myIcons';
 
 interface Property {
@@ -79,12 +79,17 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
     setLoading(true);
 
     try {
-      // Upload images first
+      // Upload new images first
       const uploadedImageUrls = await Promise.all(
         formData.tempImages.map(file => 
           uploadImage(file, 'properties', `${type}/${editingProperty?.id || 'new'}`)
         )
       );
+
+      // Combine existing and new images
+      const allImages = editingProperty 
+        ? [...editingProperty.images, ...uploadedImageUrls]
+        : uploadedImageUrls;
 
       const propertyData = {
         builder_name: formData.builder_name,
@@ -92,19 +97,19 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
         location: formData.location,
         size: formData.size,
         price: formData.price,
-        images: uploadedImageUrls
+        images: allImages
       };
 
       if (editingProperty) {
         const { error } = await supabase
-          .from(tableName)
+          .from(`${type}_properties`)
           .update(propertyData)
           .eq('id', editingProperty.id);
 
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from(tableName)
+          .from(`${type}_properties`)
           .insert([propertyData]);
 
         if (error) throw error;
@@ -146,6 +151,16 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
       tempImages: []
     });
     setShowForm(true);
+  };
+
+  const handleImagesUpdate = (updatedImages: string[]) => {
+    if (editingProperty) {
+      setEditingProperty({
+        ...editingProperty,
+        images: updatedImages
+      });
+    }
+    fetchProperties();
   };
 
   const handleCancel = () => {
@@ -272,6 +287,17 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
             </div>
           </div>
 
+          {editingProperty && editingProperty.images && editingProperty.images.length > 0 && (
+            <div className="space-y-4">
+              <ImageViewer
+                images={editingProperty.images}
+                type={type}
+                propertyId={editingProperty.id}
+                onImagesUpdate={handleImagesUpdate}
+              />
+            </div>
+          )}
+
           <ImageUploader
             images={formData.tempImages.map(file => URL.createObjectURL(file))}
             onUpload={handleImageSelect}
@@ -331,7 +357,7 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
                     {property.location}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    {formatPrice(property.price)}
+                    {property.price}
                   </td>
                   <td className="px-6 py-4 text-right text-sm font-medium">
                     <button

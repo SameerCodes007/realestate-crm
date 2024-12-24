@@ -132,11 +132,11 @@ const ServicesManager: React.FC<ServicesManagerProps> = ({ type }) => {
 
     try {
       const imagesToDelete = type === 'developers' 
-        ? [service.logo]
-        : service.image;
+        ? service.logo
+        : service.images;
 
       await Promise.all(
-        imagesToDelete.map(url => deleteImage(type, url))
+        [imagesToDelete].map(url => deleteImage(type, url))
       );
 
       const { error } = await supabase
@@ -165,6 +165,13 @@ const ServicesManager: React.FC<ServicesManagerProps> = ({ type }) => {
   if (loading) {
     return <div>Loading...</div>;
   }
+
+  const handlePreviewImageDelete = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      tempImages: prev.tempImages.filter((_, i) => i !== index)
+    }));
+  };
 
   return (
     <div className="space-y-6">
@@ -233,17 +240,7 @@ const ServicesManager: React.FC<ServicesManagerProps> = ({ type }) => {
           <ImageUploader
             images={formData.tempImages.map(file => URL.createObjectURL(file))}
             onUpload={handleImageSelect}
-            onDelete={(url) => {
-              const index = formData.tempImages.findIndex(
-                file => URL.createObjectURL(file) === url
-              );
-              if (index > -1) {
-                setFormData(prev => ({
-                  ...prev,
-                  tempImages: prev.tempImages.filter((_, i) => i !== index)
-                }));
-              }
-            }}
+            onDelete={handlePreviewImageDelete}
             multiple={type !== 'developers'}
           />
 

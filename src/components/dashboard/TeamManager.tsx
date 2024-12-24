@@ -2,15 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import ImageUploader from './ImageUploader';
-import { uploadImage } from '../../utils/imageUpload';
+import { uploadImage, deleteImage } from '../../utils/imageUpload';
 import { Plus, Pencil, Trash } from '../myIcons';
+import ImageViewer from './ImageViewer';
 import Image from '../Image';
 
 interface TeamMember {
   id: string;
   name: string;
   role: string;
-  image: string;
+  images: string;
   created_at: string;
 }
 
@@ -64,17 +65,25 @@ const TeamManager = () => {
     setLoading(true);
 
     try {
-      let imageUrl = editingMember?.image;
+      let imageUrl = editingMember?.images;
 
-      // Upload new image if selected
+      // Upload new images if selected
       if (formData.tempImage) {
+        if(imageUrl){
+          try {
+            await deleteImage('team', imageUrl);
+          } catch (error) {
+            console.error('Error deleting image:', error);
+            alert('Failed to delete image. Please try again.');
+          }
+        }
         imageUrl = await uploadImage(formData.tempImage, 'team', editingMember?.id || 'new');
       }
 
       const memberData = {
         name: formData.name,
         role: formData.role,
-        image: imageUrl
+        images: imageUrl
       };
 
       if (editingMember) {
@@ -99,6 +108,16 @@ const TeamManager = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleImagesUpdate = (updatedImages: string[]) => {
+    if (editingMember) {
+      setEditingMember({
+        ...editingMember,
+        images: updatedImages[0]
+      });
+    }
+    fetchTeam();
   };
 
   const handleDelete = async (id: string) => {
@@ -209,6 +228,17 @@ const TeamManager = () => {
               />
             </div>
 
+            {editingMember && editingMember.images && (
+            <div className="space-y-4">
+              <ImageViewer
+                images={[editingMember.images]}
+                type="team"
+                propertyId={editingMember.id}
+                onImagesUpdate={handleImagesUpdate}
+              />
+            </div>
+          )}
+
             <ImageUploader
               images={formData.tempImage ? [URL.createObjectURL(formData.tempImage)] : []}
               onUpload={handleImageSelect}
@@ -238,13 +268,8 @@ const TeamManager = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {team.map((member) => (
             <div key={member.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <img
-                src={member.image}
-                alt={member.name}
-                className="w-full h-48 object-cover"
-              />
               <Image
-                src={member.image}
+                src={member.images}
                 alt={member.name}
                 className="w-full h-48 object-cover rounded-lg"
               />

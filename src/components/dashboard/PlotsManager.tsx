@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { formatPrice } from '../../utils/formatters';
-import { uploadImage, deleteImage } from '../../utils/imageUpload';
+import { uploadImage } from '../../utils/imageUpload';
 import ImageUploader from './ImageUploader';
+import ImageViewer from './ImageViewer';
+import { deleteImage } from '../../utils/imageUpload';
 import { Plus, Pencil, Trash } from '../myIcons';
 
 interface Plot {
@@ -11,7 +13,7 @@ interface Plot {
   project: string;
   location: string;
   price_per_sqft: number;
-  total_price: number;
+  total_price: string;
   images: string[];
 }
 
@@ -21,6 +23,14 @@ const PlotsManager = () => {
   const [error, setError] = useState<string | null>(null);
   const [editingPlot, setEditingPlot] = useState<Plot | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    builder_name: '',
+    project: '',
+    location: '',
+    price_per_sqft: '',
+    total_price: '',
+    tempImages: [] as File[]
+  });
 
   useEffect(() => {
     fetchPlots();
@@ -28,12 +38,12 @@ const PlotsManager = () => {
 
   const fetchPlots = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('plots')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
       setPlots(data || []);
     } catch (err) {
       setError(err.message);
@@ -45,20 +55,30 @@ const PlotsManager = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
-    
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    
-    const plotData = {
-      builder_name: formData.get('builder_name'),
-      project: formData.get('project'),
-      location: formData.get('location'),
-      price_per_sqft: parseFloat(formData.get('price_per_sqft') as string),
-      total_price: parseFloat(formData.get('total_price') as string),
-      images: editingPlot?.images || []
-    };
+    setLoading(true);
 
     try {
+      // Upload new images first
+      const uploadedImageUrls = await Promise.all(
+        formData.tempImages.map(file => 
+          uploadImage(file, 'plots', `${editingPlot?.id || 'new'}`)
+        )
+      );
+
+      // Combine existing and new images
+      const allImages = editingPlot 
+        ? [...editingPlot.images, ...uploadedImageUrls]
+        : uploadedImageUrls;
+
+      const plotData = {
+        builder_name: formData.builder_name,
+        project: formData.project,
+        location: formData.location,
+        price_per_sqft: parseFloat(formData.price_per_sqft),
+        total_price: formData.total_price,
+        images: allImages
+      };
+
       if (editingPlot) {
         const { error } = await supabase
           .from('plots')
@@ -75,50 +95,11 @@ const PlotsManager = () => {
       }
 
       await fetchPlots();
-      setShowForm(false);
-      setEditingPlot(null);
+      handleCancel();
     } catch (err) {
       setError(err.message);
-    }
-  };
-
-  const handleImageUpload = async (files: FileList) => {
-    try {
-      const urls = await Promise.all(
-        Array.from(files).map(file => 
-          uploadImage(file, 'plots', `${editingPlot?.id || 'new'}`)
-        )
-      );
-
-      if (editingPlot) {
-        const updatedImages = [...editingPlot.images, ...urls];
-        setEditingPlot({ ...editingPlot, images: updatedImages });
-        
-        await supabase
-          .from('plots')
-          .update({ images: updatedImages })
-          .eq('id', editingPlot.id);
-      }
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleImageDelete = async (url: string) => {
-    try {
-      await deleteImage('plots', url);
-      
-      if (editingPlot) {
-        const updatedImages = editingPlot.images.filter(img => img !== url);
-        setEditingPlot({ ...editingPlot, images: updatedImages });
-        
-        await supabase
-          .from('plots')
-          .update({ images: updatedImages })
-          .eq('id', editingPlot.id);
-      }
-    } catch (err) {
-      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -128,7 +109,7 @@ const PlotsManager = () => {
     try {
       const plot = plots.find(p => p.id === id);
       
-      // Delete images first
+      // Delete images from storage
       await Promise.all(
         plot.images.map(url => deleteImage('plots', url))
       );
@@ -145,8 +126,63 @@ const PlotsManager = () => {
     }
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
+  const handleEdit = (plot: Plot) => {
+    setEditingPlot(plot);
+    setFormData({
+      builder_name: plot.builder_name,
+      project: plot.project,
+      location: plot.location,
+      price_per_sqft: plot.price_per_sqft.toString(),
+      total_price: plot.total_price,
+      tempImages: []
+    });
+    setShowForm(true);
+  };
+
+  const handleImagesUpdate = (updatedImages: string[]) => {
+    if (editingPlot) {
+      setEditingPlot({
+        ...editingPlot,
+        images: updatedImages
+      });
+    }
+    fetchPlots();
+  };
+
+  const handleImageSelect = (files: FileList) => {
+    setFormData(prev => ({
+      ...prev,
+      tempImages: [...prev.tempImages, ...Array.from(files)]
+    }));
+  };
+
+  const handleImageDelete = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      tempImages: prev.tempImages.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleCancel = () => {
+    setShowForm(false);
+    setEditingPlot(null);
+    setFormData({
+      builder_name: '',
+      project: '',
+      location: '',
+      price_per_sqft: '',
+      total_price: '',
+      tempImages: []
+    });
+    setError(null);
+  };
+
+  if (loading && !showForm) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+      </div>
+    );
   }
 
   return (
@@ -154,10 +190,7 @@ const PlotsManager = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Gated Community Plots</h2>
         <button
-          onClick={() => {
-            setEditingPlot(null);
-            setShowForm(true);
-          }}
+          onClick={() => setShowForm(true)}
           className="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center"
         >
           <Plus className="h-5 w-5 mr-2" />
@@ -180,8 +213,8 @@ const PlotsManager = () => {
               </label>
               <input
                 type="text"
-                name="builder_name"
-                defaultValue={editingPlot?.builder_name}
+                value={formData.builder_name}
+                onChange={(e) => setFormData({ ...formData, builder_name: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                 required
               />
@@ -192,8 +225,8 @@ const PlotsManager = () => {
               </label>
               <input
                 type="text"
-                name="project"
-                defaultValue={editingPlot?.project}
+                value={formData.project}
+                onChange={(e) => setFormData({ ...formData, project: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                 required
               />
@@ -204,8 +237,8 @@ const PlotsManager = () => {
               </label>
               <input
                 type="text"
-                name="location"
-                defaultValue={editingPlot?.location}
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                 required
               />
@@ -216,8 +249,8 @@ const PlotsManager = () => {
               </label>
               <input
                 type="number"
-                name="price_per_sqft"
-                defaultValue={editingPlot?.price_per_sqft}
+                value={formData.price_per_sqft}
+                onChange={(e) => setFormData({ ...formData, price_per_sqft: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                 required
               />
@@ -227,34 +260,46 @@ const PlotsManager = () => {
                 Total Price
               </label>
               <input
-                type="number"
-                name="total_price"
-                defaultValue={editingPlot?.total_price}
+                type="text"
+                value={formData.total_price}
+                onChange={(e) => setFormData({ ...formData, total_price: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                 required
               />
             </div>
           </div>
 
+          {editingPlot && editingPlot.images && editingPlot.images.length > 0 && (
+            <div className="space-y-4">
+              <ImageViewer
+                images={editingPlot.images}
+                type="plots"
+                propertyId={editingPlot.id}
+                onImagesUpdate={handleImagesUpdate}
+              />
+            </div>
+          )}
+
           <ImageUploader
-            images={editingPlot?.images || []}
-            onUpload={handleImageUpload}
+            images={formData.tempImages.map(file => URL.createObjectURL(file))}
+            onUpload={handleImageSelect}
             onDelete={handleImageDelete}
           />
 
           <div className="flex justify-end space-x-4">
             <button
               type="button"
-              onClick={() => setShowForm(false)}
+              onClick={handleCancel}
               className="px-4 py-2 border border-gray-300 rounded-md text-gray-700"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-red-600 text-white rounded-md"
+              disabled={loading}
+              className="px-4 py-2 bg-red-600 text-white rounded-md disabled:opacity-50"
             >
-              {editingPlot ? 'Update' : 'Create'} Plot
+              {loading ? 'Saving...' : (editingPlot ? 'Update' : 'Create')}
             </button>
           </div>
         </form>
@@ -297,15 +342,12 @@ const PlotsManager = () => {
                 <td className="px-6 py-4 text-sm text-gray-500">
                   <div>
                     <div>{formatPrice(plot.price_per_sqft)}/sq.ft</div>
-                    <div className="text-xs">Total: {formatPrice(plot.total_price)}</div>
+                    <div className="text-xs">Total: {plot.total_price}</div>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-right text-sm font-medium">
                   <button
-                    onClick={() => {
-                      setEditingPlot(plot);
-                      setShowForm(true);
-                    }}
+                    onClick={() => handleEdit(plot)}
                     className="text-red-600 hover:text-red-900 mr-4"
                   >
                     <Pencil className="h-5 w-5" />

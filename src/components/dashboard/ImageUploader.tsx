@@ -63,7 +63,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
       {images.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {images.map((url) => (
+          {images.map((url, index) => (
             <div key={url} className="relative group">
               <img
                 src={url}
@@ -71,7 +71,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                 className="w-full h-32 object-cover rounded-lg"
               />
               <button
-                onClick={() => onDelete(url)}
+                onClick={() => onDelete(index)}
                 className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="h-4 w-4" />

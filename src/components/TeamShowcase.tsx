@@ -32,24 +32,13 @@ const TeamShowcase = () => {
           {team.map((member) => (
             <div key={member.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
               <img
-                src={member.image}
+                src={member.images}
                 alt={member.name}
                 className="w-full h-64 object-cover"
               />
               <div className="p-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-1">{member.name}</h3>
                 <p className="text-gray-600 mb-4">{member.role}</p>
-                <div className="flex space-x-4">
-                  <a href="#" className="text-gray-400 hover:text-red-600">
-                    <Phone className="h-5 w-5" />
-                  </a>
-                  <a href="#" className="text-gray-400 hover:text-red-600">
-                    <Mail className="h-5 w-5" />
-                  </a>
-                  <a href="#" className="text-gray-400 hover:text-red-600">
-                    <Linkedin className="h-5 w-5" />
-                  </a>
-                </div>
               </div>
             </div>
           ))}
