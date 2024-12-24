@@ -7,7 +7,7 @@ export interface Plot {
   project: string;
   location: string;
   price_per_sqft: number;
-  total_price: number;
+  total_price: string;
   images: string[];
 }
 

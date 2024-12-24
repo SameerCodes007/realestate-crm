@@ -18,13 +18,16 @@ export async function uploadImage(file: File, bucket: string, path: string): Pro
 }
 
 export async function deleteImage(bucket: string, url: string): Promise<void> {
-  const path = url.split('/').pop();
+  const path = url.split(bucket + '/').pop();
   
-  const { error } = await supabase.storage
+  try{
+    await supabase.storage
     .from(bucket)
     .remove([path]);
-
-  if (error) {
+    console.log('done');
+    
+  }
+  catch (error) {
     throw error;
   }
 }

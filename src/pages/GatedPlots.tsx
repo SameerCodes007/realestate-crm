@@ -38,7 +38,7 @@ const GatedPlots = () => {
                     />
                   )}
                   <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full">
-                    {formatPrice(plot.total_price)}
+                    {plot.total_price}
                   </div>
                 </div>
                 <div className="p-6">

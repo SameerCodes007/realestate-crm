@@ -1,10 +1,7 @@
-import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useProperty } from '../hooks/useProperty';
 import { MapPin, Download } from '../components/icons';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import LeadForm from '../components/LeadForm';
-import { formatPrice } from '../utils/formatters';
 
 const PropertyDetails = () => {
   const { id, type = 'resale' } = useParams();
@@ -25,16 +22,6 @@ const PropertyDetails = () => {
       </div>
     );
   }
-
-  const mapStyles = {
-    height: '400px',
-    width: '100%'
-  };
-
-  const defaultCenter = {
-    lat: 12.9716,
-    lng: 77.5946
-  };
 
   return (
     <div className="bg-gray-50">
@@ -81,15 +68,7 @@ const PropertyDetails = () => {
             {/* Location */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-2xl font-bold mb-4">Location</h2>
-              <LoadScript googleMapsApiKey="YOUR_GOOGLE_MAPS_API_KEY">
-                <GoogleMap
-                  mapContainerStyle={mapStyles}
-                  zoom={13}
-                  center={defaultCenter}
-                >
-                  <Marker position={defaultCenter} />
-                </GoogleMap>
-              </LoadScript>
+              <p className="text-grey-800">{property.location}</p>
             </div>
           </div>
 
@@ -98,7 +77,7 @@ const PropertyDetails = () => {
             <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
               <div className="mb-6">
                 <h3 className="text-2xl font-bold text-red-600 mb-2">
-                  {formatPrice(property.price)}
+                  {property.price}
                 </h3>
               </div>
               <button className="w-full bg-red-600 text-white px-4 py-2 rounded-lg mb-4 flex items-center justify-center">
