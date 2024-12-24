@@ -45,17 +45,17 @@ const Construction = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {services.map((service) => (
               <div key={service.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div className="h-48">
+                <div className="h-56">
                   <img 
-                    src={service.images?.[0] || '/placeholder.jpg'} 
+                    src={service.images || '/placeholder.jpg'} 
                     alt={service.title} 
                     className="w-full h-full object-cover" 
                   />
                 </div>
-                <div className="p-6">
+                {/* <div className="p-6">
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.title}</h3>
                   <p className="text-gray-600">{service.description}</p>
-                </div>
+                </div> */}
               </div>
             ))}
           </div>

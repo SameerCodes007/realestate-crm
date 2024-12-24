@@ -16,62 +16,36 @@ export function useAuth() {
   });
 
   useEffect(() => {
-    let mounted = true;
-
-    // Get initial session
     const getInitialSession = async () => {
       try {
-        const token = localStorage.getItem('token') || '';
-        const { data, error: authError } = await supabase.auth.getUser(token);
+        const token = localStorage.getItem('token');
+        const { data, error: authError } = await supabase.auth.getUser(token || undefined);
         
         if (authError) {
+          localStorage.removeItem('token');
           throw authError;
         }
 
-        if (mounted) {
-          setAuthState({
-            user: data.user,
-            loading: false,
-            initialized: true,
-            error: null
-          });
-        }
-      } catch (error) {
-        if (mounted) {
-          console.error('Error getting session:', error);
-          setAuthState({
-            user: null,
-            loading: false,
-            initialized: true,
-            error: error instanceof Error ? error : new Error('Authentication error')
-          });
-        }
-      }
-    };
-
-    // Start loading session
-    getInitialSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mounted) {
-        setAuthState(current => ({
-          ...current,
-          user: session?.user ?? null,
+        setAuthState({
+          user: data.user,
           loading: false,
-          initialized: true
-        }));
+          initialized: true,
+          error: null
+        });
+      } catch (error) {
+        console.error('Error getting user:', error);
+        setAuthState({
+          user: null,
+          loading: false,
+          initialized: true,
+          error: error instanceof Error ? error : new Error('Authentication error')
+        });
       }
-    });
-
-    // Cleanup function
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
     };
+
+    getInitialSession();
   }, []);
 
-  // Only return the user if we've actually initialized
   return {
     user: authState.initialized ? authState.user : null,
     loading: authState.loading,

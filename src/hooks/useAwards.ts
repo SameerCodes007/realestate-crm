@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 export interface Award {
   id: string;
   title: string;
-  image: string;
+  images: string;
 }
 
 export function useAwards() {

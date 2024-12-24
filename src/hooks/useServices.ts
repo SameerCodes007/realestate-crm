@@ -5,7 +5,7 @@ export interface Service {
   id: string;
   title: string;
   description: string;
-  images: string[];
+  images: string;
 }
 
 export function useServices(type: 'construction' | 'interior') {
