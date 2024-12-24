@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import ImageUploader from './ImageUploader';
 import { uploadImage, deleteImage } from '../../utils/imageUpload';
 import { Plus, Trash } from '../myIcons';
+import Image from '../Image';
 
 interface ServicesManagerProps {
   type: 'construction' | 'interior' | 'developers' | 'awards';
@@ -13,7 +14,7 @@ interface Service {
   title?: string;
   description?: string;
   image?: string;
-  images?: string[];
+  images?: string;
   name?: string;
   logo?: string;
 }
@@ -97,11 +98,11 @@ const ServicesManager: React.FC<ServicesManagerProps> = ({ type }) => {
           }
         : type === 'awards' ? {
           title: formData.title,
-          image: uploadedUrls
+          images: uploadedUrls[0]
         } : {
             title: formData.title,
             description: formData.description,
-            images: uploadedUrls
+            images: uploadedUrls[0]
           };
 
       const { error } = await supabase
@@ -132,7 +133,7 @@ const ServicesManager: React.FC<ServicesManagerProps> = ({ type }) => {
     try {
       const imagesToDelete = type === 'developers' 
         ? [service.logo]
-        : service.images;
+        : service.image;
 
       await Promise.all(
         imagesToDelete.map(url => deleteImage(type, url))
@@ -268,8 +269,8 @@ const ServicesManager: React.FC<ServicesManagerProps> = ({ type }) => {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {services.map((service) => (
           <div key={service.id} className="relative group">
-            <img
-              src={type === 'developers' ? service.logo : JSON.parse(service?.image ? service?.image : "")?.[0]}
+            <Image
+              src={type === 'developers' ? service.logo : service?.images ? service?.images : ""}
               alt={service.title || service.name || ''}
               className="w-full h-48 object-cover rounded-lg"
             />

@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import ImageUploader from './ImageUploader';
 import { uploadImage } from '../../utils/imageUpload';
 import { Plus, Pencil, Trash } from '../myIcons';
+import Image from '../Image';
 
 interface TeamMember {
   id: string;
@@ -241,6 +242,11 @@ const TeamManager = () => {
                 src={member.image}
                 alt={member.name}
                 className="w-full h-48 object-cover"
+              />
+              <Image
+                src={member.image}
+                alt={member.name}
+                className="w-full h-48 object-cover rounded-lg"
               />
               <div className="p-4">
                 <h3 className="text-lg font-semibold">{member.name}</h3>

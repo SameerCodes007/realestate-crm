@@ -45,7 +45,7 @@ const Awards = () => {
             <SwiperSlide key={award.id}>
               <div className="bg-white p-4 rounded-lg shadow-md">
                 <img
-                  src={award.image}
+                  src={award?.images ? award?.images : ""}
                   alt={award.title}
                   className="w-full h-48 object-contain"
                 />

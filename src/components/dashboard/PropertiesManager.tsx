@@ -22,7 +22,7 @@ interface FormData {
   project: string;
   location: string;
   size: string;
-  price: number;
+  price: string;
   tempImages: File[];
 }
 
@@ -263,9 +263,9 @@ const PropertiesManager: React.FC<PropertiesManagerProps> = ({ type }) => {
                 Price
               </label>
               <input
-                type="number"
+                type="text"
                 value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                 required
               />
